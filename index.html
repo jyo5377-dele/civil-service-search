@@ -1,0 +1,77 @@
+<!doctype html>
+<html lang="ko">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>민원서비스 찾기</title>
+<style>
+:root{--primary:#174ea6;--bg:#f5f7fb;--line:#dfe4ec;--text:#182230;--muted:#657080;--ok:#0b6b3a}
+*{box-sizing:border-box} body{margin:0;font-family:system-ui,-apple-system,"Noto Sans KR","Malgun Gothic",sans-serif;background:var(--bg);color:var(--text)}
+header{background:linear-gradient(135deg,#174ea6,#2768c7);color:#fff;padding:36px 20px}
+.wrap{max-width:1120px;margin:auto}.eyebrow{font-size:14px;opacity:.85}h1{margin:5px 0 8px;font-size:clamp(26px,4vw,38px)}header p{margin:0;opacity:.9}
+main{padding:24px 20px 48px}.panel{background:#fff;border:1px solid var(--line);border-radius:16px;padding:18px;box-shadow:0 5px 18px rgba(0,0,0,.04)}
+.controls{display:grid;grid-template-columns:2fr 1fr;gap:12px}label{display:block;font-weight:700;font-size:14px;margin-bottom:7px}
+input,select{width:100%;min-height:46px;border:1px solid #bfc8d5;border-radius:10px;padding:10px 12px;font:inherit;background:#fff}
+input:focus,select:focus{outline:3px solid rgba(23,78,166,.15);border-color:var(--primary)}
+.summary{display:flex;justify-content:space-between;align-items:center;margin:18px 2px 10px;gap:12px}.count{font-weight:800;color:var(--primary)}
+.tablebox{overflow-x:auto;border:1px solid var(--line);border-radius:12px;background:#fff}
+table{width:100%;border-collapse:collapse;min-width:800px}th,td{padding:14px 12px;text-align:left;border-bottom:1px solid var(--line);vertical-align:middle}
+th{background:#f1f5fb;font-size:14px}tr:last-child td{border-bottom:0}tbody tr:hover{background:#fafcff}
+.badge{display:inline-block;border-radius:999px;padding:5px 9px;font-size:12px;font-weight:800;background:#e8f5ee;color:var(--ok)}
+.badge.no{background:#f1f2f4;color:#555}.empty{text-align:center;padding:38px;color:var(--muted)}
+.cards{display:none}.card{background:#fff;border:1px solid var(--line);border-radius:12px;padding:16px}.card h2{font-size:18px;margin:0 0 12px;color:#153f7d}
+.meta{display:grid;grid-template-columns:105px 1fr;gap:8px 10px;font-size:14px}.meta b{color:var(--muted)}
+footer{text-align:center;color:var(--muted);font-size:13px;padding:0 20px 30px}
+@media(max-width:720px){header{padding:28px 18px}.controls{grid-template-columns:1fr}.tablebox{display:none}.cards{display:grid;gap:10px}.summary{align-items:flex-start;flex-direction:column}main{padding:18px 14px 36px}.panel{padding:14px}}
+</style>
+</head>
+<body>
+<header><div class="wrap"><div class="eyebrow">민원 안내</div><h1>민원서비스 찾기</h1><p>서비스명을 검색하거나 민원분야를 선택해 필요한 서비스를 빠르게 찾아보세요.</p></div></header>
+<main class="wrap">
+<section class="panel" aria-label="민원서비스 검색">
+  <div class="controls">
+    <div><label for="q">서비스명 검색</label><input id="q" type="search" placeholder="예: 여권, 주민등록, 건축" autocomplete="off"></div>
+    <div><label for="category">민원분야</label><select id="category"><option value="">전체 분야</option></select></div>
+  </div>
+  <div class="summary"><div>검색 결과</div><div id="count" class="count" aria-live="polite"></div></div>
+  <div class="tablebox"><table><thead><tr><th>서비스명</th><th>소관기관</th><th>민원분야</th><th>온라인처리</th><th>처리기한</th><th>수수료</th></tr></thead><tbody id="rows"></tbody></table></div>
+  <div id="cards" class="cards"></div>
+  <div id="empty" class="empty" hidden>조건에 맞는 민원서비스가 없습니다.</div>
+</section>
+</main>
+<footer>민원서비스 목록 안내 페이지</footer>
+<script>
+const services = [{"서비스ID": "S001", "서비스명": "주민등록등본 발급", "소관기관": "주민센터", "민원분야": "주민등록", "온라인처리": "가능", "처리기한일": 7, "수수료": 500}, {"서비스ID": "S002", "서비스명": "전입신고", "소관기관": "복지정책과", "민원분야": "주민등록", "온라인처리": "불가", "처리기한일": 1, "수수료": 0}, {"서비스ID": "S003", "서비스명": "인감증명 발급", "소관기관": "복지정책과", "민원분야": "주민등록", "온라인처리": "가능", "처리기한일": 1, "수수료": 0}, {"서비스ID": "S004", "서비스명": "주민등록증 재발급", "소관기관": "건축과", "민원분야": "주민등록", "온라인처리": "가능", "처리기한일": 0, "수수료": 0}, {"서비스ID": "S005", "서비스명": "건축물대장 발급", "소관기관": "구청 민원봉사과", "민원분야": "건축", "온라인처리": "불가", "처리기한일": 0, "수수료": 1000}, {"서비스ID": "S006", "서비스명": "건축허가 신청", "소관기관": "건축과", "민원분야": "건축", "온라인처리": "불가", "처리기한일": 1, "수수료": 2000}, {"서비스ID": "S007", "서비스명": "용도변경 신고", "소관기관": "시청 민원과", "민원분야": "건축", "온라인처리": "불가", "처리기한일": 0, "수수료": 0}, {"서비스ID": "S008", "서비스명": "지방세 납부확인서", "소관기관": "건축과", "민원분야": "세무", "온라인처리": "가능", "처리기한일": 1, "수수료": 1000}, {"서비스ID": "S009", "서비스명": "취득세 신고", "소관기관": "교통행정과", "민원분야": "세무", "온라인처리": "가능", "처리기한일": 0, "수수료": 0}, {"서비스ID": "S010", "서비스명": "재산세 조회", "소관기관": "교통행정과", "민원분야": "세무", "온라인처리": "가능", "처리기한일": 3, "수수료": 0}, {"서비스ID": "S011", "서비스명": "기초연금 신청", "소관기관": "건축과", "민원분야": "복지", "온라인처리": "가능", "처리기한일": 7, "수수료": 500}, {"서비스ID": "S012", "서비스명": "복지급여 조회", "소관기관": "시청 민원과", "민원분야": "복지", "온라인처리": "가능", "처리기한일": 14, "수수료": 5000}, {"서비스ID": "S013", "서비스명": "장애인 등록", "소관기관": "주민센터", "민원분야": "복지", "온라인처리": "가능", "처리기한일": 5, "수수료": 0}, {"서비스ID": "S014", "서비스명": "자동차 등록", "소관기관": "주민센터", "민원분야": "교통", "온라인처리": "가능", "처리기한일": 1, "수수료": 5000}, {"서비스ID": "S015", "서비스명": "운전면허 갱신", "소관기관": "교통행정과", "민원분야": "교통", "온라인처리": "불가", "처리기한일": 1, "수수료": 0}, {"서비스ID": "S016", "서비스명": "주정차 위반 조회", "소관기관": "주민센터", "민원분야": "교통", "온라인처리": "가능", "처리기한일": 7, "수수료": 1000}, {"서비스ID": "S017", "서비스명": "배출시설 신고", "소관기관": "주민센터", "민원분야": "환경", "온라인처리": "가능", "처리기한일": 1, "수수료": 0}, {"서비스ID": "S018", "서비스명": "폐기물 처리 신청", "소관기관": "시청 민원과", "민원분야": "환경", "온라인처리": "가능", "처리기한일": 14, "수수료": 5000}, {"서비스ID": "S019", "서비스명": "식품영업 신고", "소관기관": "건축과", "민원분야": "위생", "온라인처리": "가능", "처리기한일": 3, "수수료": 2000}, {"서비스ID": "S020", "서비스명": "위생업소 조회", "소관기관": "시청 민원과", "민원분야": "위생", "온라인처리": "불가", "처리기한일": 7, "수수료": 500}, {"서비스ID": "S021", "서비스명": "여권 발급 신청", "소관기관": "건축과", "민원분야": "여권", "온라인처리": "가능", "처리기한일": 7, "수수료": 1000}, {"서비스ID": "S022", "서비스명": "여권 재발급", "소관기관": "교통행정과", "민원분야": "여권", "온라인처리": "가능", "처리기한일": 1, "수수료": 1000}];
+const q=document.querySelector('#q'), category=document.querySelector('#category'),
+rows=document.querySelector('#rows'), cards=document.querySelector('#cards'),
+count=document.querySelector('#count'), empty=document.querySelector('#empty');
+
+const esc=s=>String(s).replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
+const fee=n=>Number(n)===0?'무료':Number(n).toLocaleString('ko-KR')+'원';
+const days=n=>Number(n)===0?'즉시':Number(n)+'일';
+
+[...new Set(services.map(x=>x['민원분야']))].sort((a,b)=>a.localeCompare(b,'ko')).forEach(v=>{
+  const o=document.createElement('option'); o.value=v;o.textContent=v;category.appendChild(o);
+});
+
+function render(){
+  const keyword=q.value.trim().toLocaleLowerCase('ko');
+  const cat=category.value;
+  const list=services.filter(x =>
+    (!keyword || String(x['서비스명']).toLocaleLowerCase('ko').includes(keyword)) &&
+    (!cat || x['민원분야']===cat)
+  );
+  count.textContent=`현재 ${list.length}건 표시 / 전체 ${services.length}건`;
+  empty.hidden=list.length!==0;
+  rows.innerHTML=list.map(x=>`<tr>
+    <td><strong>${esc(x['서비스명'])}</strong></td><td>${esc(x['소관기관'])}</td><td>${esc(x['민원분야'])}</td>
+    <td><span class="badge ${x['온라인처리']==='가능'?'':'no'}">${esc(x['온라인처리'])}</span></td>
+    <td>${days(x['처리기한일'])}</td><td>${fee(x['수수료'])}</td></tr>`).join('');
+  cards.innerHTML=list.map(x=>`<article class="card"><h2>${esc(x['서비스명'])}</h2><div class="meta">
+    <b>소관기관</b><span>${esc(x['소관기관'])}</span><b>민원분야</b><span>${esc(x['민원분야'])}</span>
+    <b>온라인처리</b><span><span class="badge ${x['온라인처리']==='가능'?'':'no'}">${esc(x['온라인처리'])}</span></span>
+    <b>처리기한</b><span>${days(x['처리기한일'])}</span><b>수수료</b><span>${fee(x['수수료'])}</span></div></article>`).join('');
+}
+q.addEventListener('input',render); category.addEventListener('change',render); render();
+</script>
+</body></html>
